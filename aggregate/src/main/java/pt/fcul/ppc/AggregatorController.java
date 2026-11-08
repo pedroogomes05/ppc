@@ -13,9 +13,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Agregador — compara três modelos de concorrência no mesmo endpoint base.
@@ -34,12 +36,14 @@ public class AggregatorController {
     private static final Logger log = LoggerFactory.getLogger(AggregatorController.class);
 
     private final HttpClient httpClient;
+    private final ExecutorService virtualThreadExecutor;
 
     @Value("${stub.url:http://localhost:8080/stub}")
     private String stubUrl;
 
-    public AggregatorController(HttpClient httpClient) {
+    public AggregatorController(HttpClient httpClient, ExecutorService virtualThreadExecutor) {
         this.httpClient = httpClient;
+        this.virtualThreadExecutor = virtualThreadExecutor;
     }
 
     // =========================================================================
@@ -73,8 +77,8 @@ public class AggregatorController {
     //   1. O pedido HTTP chega ao Tomcat (numa platform thread do pool).
     //   2. Criamos um Executor especial que cria uma nova Virtual Thread
     //      por cada tarefa submetida.
-    //   3. O trabalho (doWork) é submetido a essa Virtual Thread.
-    //      A platform thread do Tomcat fica à espera que a virtual thread acabe.
+    //   3. O trabalho (doWork) é submetido a essa Virtual Thread e devolvido
+    //      ao Spring MVC como CompletableFuture. A thread do Tomcat é libertada.
     //   4. Quando a virtual thread bloqueia no I/O (httpClient.send()),
     //      a JVM DESMONTA essa virtual thread do seu carrier thread (uma
     //      thread real do OS) e usa esse carrier thread para executar
@@ -89,10 +93,22 @@ public class AggregatorController {
     //   apenas por carrier threads disponíveis (que são libertados no I/O).
     // =========================================================================
     @GetMapping("/virtual")
-    public Map<String, Object> handleVirtual() throws Exception {
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            return executor.submit(() -> doWork("virtual")).get();
-        }
+    public CompletableFuture<Map<String, Object>> handleVirtual() {
+        String requestThread = Thread.currentThread().toString();
+        log.info("[virtual] Pedido recebido | requestThread={}", requestThread);
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String, Object> result = new HashMap<>(doWork("virtual"));
+                result.put("threadRequest", requestThread);
+                return result;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new CompletionException(e);
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        }, virtualThreadExecutor);
     }
 
 

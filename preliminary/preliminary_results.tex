@@ -1,0 +1,76 @@
+%% Relatório de resultados preliminares adaptado do template PPC.
+%% Substituir os campos entre parênteses retos pelos dados do autor.
+\documentclass[sigplan]{acmart}
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\usepackage{array}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Resultados Preliminares: Modelos de Concorrência num Microserviço Java}
+
+\author{[Nome do autor]}
+\affiliation{%
+ \institution{Programação Paralela e Concorrente \\
+  Mestrado em [nome do curso] \\
+  Faculdade de Ciências, Universidade de Lisboa}
+ \city{Lisboa}
+ \country{Portugal}}
+\email{[email institucional]}
+
+\begin{abstract}
+Este trabalho compara três modelos de concorrência num microserviço Java: platform threads, virtual threads e I/O assíncrono. Foi implementado um protótipo com um serviço HTTP simulado e executado um piloto com k6, a 10, 100 e 500 utilizadores virtuais, usando um atraso de 1.000 ms no serviço simulado. Nesta primeira execução, os três modelos apresentaram resultados semelhantes; são dados exploratórios e não permitem ainda conclusões gerais.
+\end{abstract}
+
+\pagestyle{plain}
+\maketitle
+
+\section{Objetivo e trabalho realizado}
+A pergunta de investigação é: como varia o throughput e a latência de um microserviço quando aumenta a concorrência, comparando diferentes modelos de execução? Foi desenvolvido um serviço simulado (stub), na porta 8080, que aguarda um intervalo configurável e devolve uma resposta JSON, e um agregador Spring Boot, na porta 8081, com três endpoints: \texttt{/aggregate/platform}, que faz uma chamada HTTP bloqueante na thread do pedido; \texttt{/aggregate/virtual}, que submete a chamada bloqueante a uma virtual thread~\cite{jep444}; e \texttt{/aggregate/async}, que usa \texttt{HttpClient.sendAsync()} e \texttt{CompletableFuture}.
+
+O gerador k6 aumenta a carga até ao nível pretendido durante 10 s, mantém-na durante 30 s e reduz a carga durante 5 s. Foram executados os três modos com 10, 100 e 500 utilizadores virtuais (VUs). Recolheram-se throughput, latências p50/p95/p99 e taxa de pedidos falhados, métricas disponibilizadas pelo k6~\cite{k6metrics}. Os resultados brutos estão guardados em JSON, com resumo CSV e gráficos.
+
+\section{Configuração e resultados do piloto}
+O ficheiro de configuração atual do stub define \texttt{stub.delay-ms=1000}; logo, o piloto usou um atraso artificial de 1.000 ms. O teste define timeout de 15 s. O registo de ambiente indica Windows 10, Temurin OpenJDK 25.0.5 (target do projeto: Java 21) e Maven 3.10.0. A documentação do benchmark indica que o gerador e os servidores foram executados na mesma máquina. O modelo do processador e a memória RAM ainda não estão registados.
+
+Existe uma execução guardada por combinação de modo e carga. A Tabela~\ref{tab:pilot} resume as métricas a 500 VUs. Todos os nove resumos registam 0\% de pedidos falhados.
+
+\begin{table}[t]
+\caption{Resultados do piloto a 500 VUs (uma execução por modo).}
+\label{tab:pilot}
+\centering
+\small
+\begin{tabular}{lrrrr}
+\hline
+Modo & req/s & p50 (ms) & p95 (ms) & p99 (ms) \\
+\hline
+Platform & 183,80 & 2.523,02 & 2.564,51 & 2.575,87 \\
+Virtual  & 183,68 & 2.511,24 & 2.642,35 & 2.707,13 \\
+Async    & 184,35 & 2.513,77 & 2.572,03 & 2.604,67 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../benchmarks/results/figures/throughput_vs_concurrency.png}
+\caption{Throughput no piloto exploratório. Os três modos apresentam valores próximos.}
+\label{fig:throughput}
+\end{figure}
+
+\section{Interpretação e limitações}
+Nos níveis de carga testados, os dados guardados não mostram uma vantagem clara de throughput para qualquer modo. A 10 VUs, a latência p50 situa-se entre 1.007 e 1.013 ms, consistente com o atraso configurado no stub. A 500 VUs, o throughput fica perto de 184 pedidos/s e o p99 entre 2,6 e 2,7 s. Como há apenas uma execução por condição, estes valores descrevem o piloto e não demonstram equivalência nem superioridade de um modelo.
+
+O código usado no piloto submetia o trabalho a uma virtual thread, mas chamava \texttt{Future.get()} no controller. Por isso, a thread do pedido no Tomcat ficava bloqueada durante a chamada ao stub, limitando a comparação do modelo virtual. Desde então, o endpoint foi alterado para devolver um \texttt{CompletableFuture} ao Spring MVC e executar a chamada bloqueante numa virtual thread dedicada. Os resultados da tabela foram recolhidos antes dessa alteração e devem ser tratados apenas como piloto exploratório; é necessário repetir a comparação com a versão corrigida.
+
+\section{Próximos passos}
+Validar o novo percurso de virtual threads; registar CPU e RAM; repetir a comparação base várias vezes, alternando ou aleatorizando a ordem dos modos e guardando os dados brutos. Depois de estabilizar a baseline, variar um fator de cada vez: atraso variável, 1/3/5 chamadas ao stub e trabalho de CPU. Medir também memória, analisar a dispersão dos resultados e completar o artigo com metodologia reproduzível e referências.
+
+\section{Utilização de ferramentas de IA}
+Ferramentas de IA generativa foram usadas para apoiar a redação e revisão deste relatório.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{preliminary_refs}
+
+\end{document}

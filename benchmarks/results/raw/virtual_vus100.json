@@ -1,11 +1,11 @@
 {
   "mode": "virtual",
   "vus": 100,
-  "throughput": 82.07,
-  "p50_ms": 1013.09,
-  "p95_ms": 1019.5,
-  "p99_ms": 1021.1,
-  "avg_ms": 1011.99,
+  "throughput": 82.16,
+  "p50_ms": 1008.27,
+  "p95_ms": 1020.13,
+  "p99_ms": 1032.76,
+  "avg_ms": 1010.35,
   "error_rate": 0,
-  "total_requests": 3756
+  "total_requests": 3762
 }

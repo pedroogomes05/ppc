@@ -1,11 +1,11 @@
 {
   "mode": "async",
   "vus": 10,
-  "throughput": 8.33,
-  "p50_ms": 1006.97,
-  "p95_ms": 1018.05,
-  "p99_ms": 1019.04,
-  "avg_ms": 1009.09,
+  "throughput": 8.36,
+  "p50_ms": 1007.3,
+  "p95_ms": 1017.68,
+  "p99_ms": 1019.09,
+  "avg_ms": 1008.24,
   "error_rate": 0,
-  "total_requests": 379
+  "total_requests": 380
 }

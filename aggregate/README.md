@@ -45,16 +45,19 @@ O Tomcat tem por defeito **200 threads** no pool. Com 500 pedidos concorrentes,
 **Como funciona:**
 ```
 Pedido → Tomcat recebe numa platform thread
-       → criamos uma Virtual Thread com Executors.newVirtualThreadPerTaskExecutor()
+       → submete a tarefa ao executor partilhado de virtual threads
+       → o controller devolve um CompletableFuture ao Spring MVC
+       → Spring MVC liberta a thread do Tomcat enquanto aguarda
        → virtual thread executa httpClient.send() [BLOQUEANTE para a virtual thread]
        → quando bloqueia no I/O, a JVM DESMONTA a virtual thread do carrier thread
        → o carrier thread fica livre para executar outras virtual threads
        → stub responde → JVM remonta a virtual thread → constrói resposta
 ```
 
-**Comportamento chave:** o número de virtual threads não está limitado pelo OS.
-Com 10 000 pedidos concorrentes, existem 10 000 virtual threads, mas apenas
-~N carrier threads (N = nº de CPUs). O bloqueio no I/O **não desperdiça recursos**.
+**Comportamento chave:** existe uma virtual thread por tarefa. Quando a chamada
+HTTP bloqueia em I/O, a JVM pode libertar o carrier para executar outra tarefa;
+o Spring MVC também mantém o pedido HTTP assíncrono em vez de prender a thread
+do Tomcat à espera do resultado.
 
 **Resposta:**
 ```json
@@ -110,7 +113,7 @@ o pedido e receber a resposta), não durante os 50 ms de espera pelo stub.
 
 | | Platform | Virtual | Async |
 |---|---|---|---|
-| **Thread por pedido** | 1 platform thread do Tomcat | 1 virtual thread (leve) | Nenhuma bloqueada |
+| **Thread durante a chamada bloqueante ao stub** | 1 platform thread do Tomcat | 1 virtual thread (leve) | Chamada não bloqueante |
 | **Bloqueia no I/O?** | ✅ Sim (platform thread parada) | ✅ Sim (mas o carrier é libertado) | ❌ Não (non-blocking) |
 | **Limite prático** | ~200 pedidos concorrentes | Dezenas de milhar | Dezenas de milhar |
 | **Pior métrica sob carga** | p99 dispara | p99 estável | p99 mais estável |

@@ -1,11 +1,11 @@
 {
   "mode": "platform",
   "vus": 500,
-  "throughput": 183.8,
-  "p50_ms": 2523.02,
-  "p95_ms": 2564.51,
-  "p99_ms": 2575.87,
-  "avg_ms": 2281.78,
+  "throughput": 183.71,
+  "p50_ms": 2477.89,
+  "p95_ms": 2793.12,
+  "p99_ms": 2837.45,
+  "avg_ms": 2280.2,
   "error_rate": 0,
-  "total_requests": 8429
+  "total_requests": 8436
 }
