@@ -14,44 +14,46 @@ Reallocating 'glb_str_end' (item size: 4) to 20 items.
 Reallocating 'glb_str_ptr' (item size: 4) to 20 items.
 Reallocating 'global_strs' (item size: 1) to 4000000 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
-You've used 2 entries,
+Warning--page numbers missing in both pages and numpages fields in dundov2026
+You've used 5 entries,
             6335 wiz_defined-function locations,
-            1539 strings with 18781 characters,
-and the built_in function-call counts, 1581 in all, are:
-= -- 172
-> -- 34
+            1557 strings with 19297 characters,
+and the built_in function-call counts, 4012 in all, are:
+= -- 444
+> -- 85
 < -- 0
-+ -- 8
-- -- 14
-* -- 78
-:= -- 170
-add.period$ -- 12
-call.type$ -- 2
-change.case$ -- 10
-chr.to.int$ -- 2
-cite$ -- 2
-duplicate$ -- 145
-empty$ -- 105
-format.name$ -- 14
-if$ -- 328
++ -- 20
+- -- 35
+* -- 216
+:= -- 414
+add.period$ -- 29
+call.type$ -- 5
+change.case$ -- 25
+chr.to.int$ -- 5
+cite$ -- 6
+duplicate$ -- 397
+empty$ -- 284
+format.name$ -- 35
+if$ -- 883
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 0
-newline$ -- 63
-num.names$ -- 14
-pop$ -- 41
+missing$ -- 5
+newline$ -- 93
+num.names$ -- 35
+pop$ -- 130
 preamble$ -- 1
-purify$ -- 26
+purify$ -- 65
 quote$ -- 0
-skip$ -- 59
+skip$ -- 154
 stack$ -- 0
-substring$ -- 114
-swap$ -- 8
+substring$ -- 288
+swap$ -- 24
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 60
-warning$ -- 0
-while$ -- 14
+type$ -- 150
+warning$ -- 1
+while$ -- 35
 width$ -- 0
-write$ -- 82
+write$ -- 145
+(There was 1 warning)

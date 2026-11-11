@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{2}
+\begin{thebibliography}{5}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -40,27 +40,65 @@
 \@ifundefined{NAT@parse@date}{}{\def\NAT@parse@date#1#2#3#4#5#6@@{\NAT@parse@date@orig#1#2#3#4#5#6@@\def\NAT@tempyear{0000}\def\NAT@tempexlab{{?}}\ifx\NAT@year\NAT@tempyear\ifx\NAT@exlab\NAT@tempexlab\def\NAT@date{[n.\,d.]}\else\edef\NAT@date{[n.\,d.]\NAT@exlab}\fi\fi}}
 \makeatother
 
+\bibitem[Dundov(2026)]%
+        {dundov2026}
+\bibfield{author}{\bibinfo{person}{Anja Dundov}.}
+  \bibinfo{year}{2026}\natexlab{}.
+\newblock \showarticletitle{Evaluating {Java} Virtual Threads for Concurrent
+  {Spring Boot} and {Helidon} Services}. In \bibinfo{booktitle}{\emph{2026 49th
+  MIPRO ICT and Electronics Convention (MIPRO)}}. \bibinfo{publisher}{IEEE},
+  \bibinfo{address}{Opatija, Croatia}.
+\newblock
+\href{https://doi.org/10.1109/MIPRO70003.2026.11591610}{doi:\nolinkurl{10.1109/MIPRO70003.2026.11591610}}
+
+
+\bibitem[Gomes(2026)]%
+        {repogit}
+\bibfield{author}{\bibinfo{person}{Pedro Gomes}.}
+  \bibinfo{year}{2026}\natexlab{}.
+\newblock \bibinfo{title}{Repositório do projeto {PPC}: Modelos de
+  Concorrência num Microserviço {Java}}.
+\newblock \bibinfo{howpublished}{\url{https://github.com/pedroogomes05/ppc}}.
+\newblock
+\newblock
+\shownote{Acedido: novembro 2026}.
+
+
 \bibitem[{Grafana Labs}(2026)]%
         {k6metrics}
 \bibfield{author}{\bibinfo{person}{{Grafana Labs}}.}
   \bibinfo{year}{2026}\natexlab{}.
-\newblock \bibinfo{title}{{Built-in metrics reference}}.
+\newblock \bibinfo{title}{k6 Built-in metrics}.
 \newblock
   \bibinfo{howpublished}{\url{https://grafana.com/docs/k6/latest/using-k6/metrics/reference/}}.
 \newblock
 \newblock
-\shownote{Accessed 8 November 2026}.
+\shownote{Acedido: novembro 2026}.
 
 
 \bibitem[{OpenJDK}(2023)]%
         {jep444}
 \bibfield{author}{\bibinfo{person}{{OpenJDK}}.}
   \bibinfo{year}{2023}\natexlab{}.
-\newblock \bibinfo{title}{{JEP 444: Virtual Threads}}.
+\newblock \bibinfo{title}{{JEP} 444: Virtual Threads}.
 \newblock \bibinfo{howpublished}{\url{https://openjdk.org/jeps/444}}.
 \newblock
 \newblock
-\shownote{Accessed 8 November 2026}.
+\shownote{Acedido: novembro 2026}.
+
+
+\bibitem[Pandita(2024)]%
+        {pandita2024}
+\bibfield{author}{\bibinfo{person}{V. Pandita}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \emph{\bibinfo{title}{Benchmarking the Performance of {Java} Virtual
+  Threads in High-Throughput Workloads}}.
+\newblock MSc thesis. \bibinfo{school}{National College of Ireland}.
+\newblock
+\urldef\tempurl%
+\url{https://norma.ncirl.ie/8134/}
+\showURL{%
+\tempurl}
 
 
 \end{thebibliography}

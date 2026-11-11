@@ -1,0 +1,86 @@
+%%
+%% Topic Proposal template (single page) for the PPC project.
+%% Based on `sample-sigchi.tex' (acmart), modified by the faculty @ DI/FCUL.
+%%
+%% IMPORTANT: the proposal must fit in ONE page, references included.
+%% Do not change margins, font size, or spacing to make it fit.
+%%
+\documentclass[sigplan]{acmart}
+\settopmatter{printacmref=false} % Removes citation information below abstract
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with conference information in first column
+\usepackage{array}
+
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+\title{Topic Proposal: Title of Your Study}
+
+\author{Your Name}
+\affiliation{%
+ \institution{
+  Programação Paralela e Concorrente \\
+  Mestrado em \{nome do Mestrado\} \\
+  Faculdade de Ciências, Universidade de Lisboa}
+ }
+\email{fcxxxxx@alunos.ciencias.ulisboa.pt}
+
+
+\begin{abstract}
+In 2--3 sentences: what you will measure, on which system, and why the answer matters.
+\end{abstract}
+
+\pagestyle{plain} % removes running headers
+
+\maketitle
+
+\section{Topic and Motivation}
+
+\noindent\textbf{Context.} Which parallel/concurrent mechanism is under study (a concurrency primitive, a scheduling policy, a parallelization strategy, a hardware feature, an architectural tradeoff, \ldots)? \\
+
+\noindent\textbf{Motivation.} In one paragraph: why does this question matter, and to whom? Who would change a decision based on your results? Niche situations are not accepted.
+
+\section{Research Questions}
+
+State one to three specific, measurable, and falsifiable research questions. For each, give your hypothesis (the outcome you expect) and how the data could prove it wrong. \\
+
+\noindent\textbf{RQ1.} Does \textit{X} outperform \textit{Y} in terms of \textit{metric} for \textit{workload} on \textit{N} cores? \\
+\noindent\textbf{H1.} We expect \ldots, because \ldots
+
+\section{Type of Study}
+
+Mark one and justify: \emph{(a)} original data from original work; \emph{(b)} reproduction of a subset of a published benchmark on significantly different hardware; \emph{(c)} extension of the scope of a published study. For (b) and (c), cite the source~\cite{lamport1978clocks} and state what is significantly different. If the topic is reused from another course, identify the original project and what is new.
+
+\section{Planned Methodology}
+
+\noindent\textbf{System(s) under study.} What will you build, modify, or use (application, benchmark, language, runtime, library)? \\
+
+\noindent\textbf{Independent variables.} What will you vary, and with which levels (e.g., threads $\in \{1,2,4,8,16\}$, input size, contention level, implementation)? \\
+
+\noindent\textbf{Dependent variables.} What will you measure (e.g., wall-clock time, throughput, latency, speedup, energy) and with which tool? \\
+
+\noindent\textbf{Held constant.} What will you control, and how?
+
+\section{Experimental Setup and Feasibility}
+
+\noindent\textbf{Hardware and software.} Machine(s) you have access to (CPU model, cores, memory, GPU), OS, and compiler/runtime versions. If you need equipment you do not have, say so. \\
+
+\noindent\textbf{Risks.} What could prevent you from measuring this, and what is your fallback (e.g., a reduced scope)?
+
+\section{Plan}
+
+What you expect to have ready by the progress check-in (11 Nov) and by the final paper (02 Dec).
+
+\section{Key References}
+
+Cite the two or three sources that most directly shape this study (the final paper requires at least six).
+
+\medskip
+\noindent\textbf{Use of AI tools.} Disclose any AI tools used and for what, or state that none were used.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The next two lines define the bibliography style to be used, and
+%% the bibliography file.
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample-base}
+
+\end{document}
