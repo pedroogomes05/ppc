@@ -1,6 +1,6 @@
 $MODES = @('platform', 'virtual', 'async')
-$VUS_LEVELS = @(10, 100, 500, 1000, 2000)
-$REPETITIONS = 10
+$VUS_LEVELS = @(10, 500, 1000)
+$REPETITIONS = 3
 $WARMUP_SECONDS = 10
 $MEASUREMENT_SECONDS = 30
 $PAUSE_BETWEEN_RUNS_SECONDS = 3
@@ -8,7 +8,7 @@ $STUB_DELAY_MS = 1000
 $TOMCAT_MAX_THREADS = 200
 
 # Change this if the Mac's LAN address changes. Do not add a trailing slash.
-$BASE_URL = 'http://192.168.1.48:8081'
+$BASE_URL = 'http://192.168.1.24:8081'
 $BASE_URL = $BASE_URL.TrimEnd('/')
 
 $RESULTS_RELATIVE = 'results/raw_rq1'

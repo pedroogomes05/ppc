@@ -28,7 +28,6 @@ export const options = {
     // once for warm-up and again for the measured 30-second interval.
     vus: VUS,
     duration: `${WARMUP ? WARMUP_DURATION_SECONDS : MEASUREMENT_DURATION_SECONDS}s`,
-    gracefulStop: '15s',
     summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(50)', 'p(95)', 'p(99)'],
 };
 

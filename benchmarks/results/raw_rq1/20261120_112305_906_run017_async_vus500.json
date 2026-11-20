@@ -1,0 +1,18 @@
+{
+  "run_id": "20261120_112305_906_run017",
+  "repetition": 1,
+  "mode": "async",
+  "vus": 500,
+  "base_url": "http://192.168.1.24:8081",
+  "stub_delay_ms": 1000,
+  "tomcat_max_threads": 200,
+  "measurement_duration_s": 30,
+  "completed_at_utc": "2026-11-20T11:37:12.137Z",
+  "throughput": 398.87,
+  "p50_ms": 1064.3,
+  "p95_ms": 1137.32,
+  "p99_ms": 1160.21,
+  "avg_ms": 1062.25,
+  "error_rate": 0.84,
+  "total_requests": 11966
+}
