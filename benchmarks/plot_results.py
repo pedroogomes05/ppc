@@ -1,197 +1,188 @@
-"""
-plot_results.py — Gera gráficos comparativos a partir dos resultados do k6
+"""Summarize repeated k6 runs and generate RQ1 plots.
 
-Lê todos os ficheiros JSON em results/raw/ e gera:
-  1. Throughput vs Concorrência (req/s por nível de VUs)
-  2. Latência p95 vs Concorrência
-  3. Latência p99 vs Concorrência
-  4. Tabela completa de resultados em resultados_summary.csv
-
-Uso:
-  python plot_results.py
-
-Pré-requisito:
-  pip install pandas matplotlib
+Reads one JSON summary per measured run from results/raw_rq1/ and produces
+median-with-IQR plots plus a grouped CSV summary.
 """
 
 import json
 import os
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import pandas as pd
 
-# ── Configuração ──────────────────────────────────────────────────────────────
 
-RAW_DIR     = os.path.join(os.path.dirname(__file__), 'results', 'raw')
-FIGURES_DIR = os.path.join(os.path.dirname(__file__), 'results', 'figures')
+BASE_DIR = os.path.dirname(__file__)
+RAW_DIR = os.path.join(BASE_DIR, 'results', 'raw_rq1')
+FIGURES_DIR = os.path.join(BASE_DIR, 'results', 'figures', 'rq1')
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
-# Cores e estilos por modo — consistentes em todos os gráficos
 MODE_STYLE = {
     'platform': {'color': '#E74C3C', 'marker': 'o', 'label': 'Platform Threads'},
-    'virtual':  {'color': '#2ECC71', 'marker': 's', 'label': 'Virtual Threads'},
-    'async':    {'color': '#3498DB', 'marker': '^', 'label': 'Async (CompletableFuture)'},
+    'virtual': {'color': '#2ECC71', 'marker': 's', 'label': 'Virtual Threads'},
+    'async': {'color': '#3498DB', 'marker': '^', 'label': 'Async (CompletableFuture)'},
 }
+METRICS = ('throughput', 'p50_ms', 'p95_ms', 'p99_ms', 'error_rate')
 
-# ── Leitura dos dados ─────────────────────────────────────────────────────────
 
 def load_results(raw_dir: str) -> pd.DataFrame:
-    """Lê todos os ficheiros JSON do k6 e devolve um DataFrame unificado."""
+    """Load per-run JSON summaries, ignoring unrelated JSON files."""
     rows = []
-    for fname in sorted(os.listdir(raw_dir)):
-        if not fname.endswith('.json'):
+    for filename in sorted(os.listdir(raw_dir)):
+        if not filename.endswith('.json') or '_vus' not in filename:
             continue
-        path = os.path.join(raw_dir, fname)
-        with open(path, 'r') as f:
-            data = json.load(f)
-        rows.append(data)
+        path = os.path.join(raw_dir, filename)
+        with open(path, 'r', encoding='utf-8') as result_file:
+            rows.append(json.load(result_file))
 
     if not rows:
         raise FileNotFoundError(
-            f"Não foram encontrados ficheiros JSON em '{raw_dir}'.\n"
-            "Corre primeiro o run_all.ps1 para gerar os resultados."
+            f"No per-run JSON results found in '{raw_dir}'. "
+            "Run benchmarks/run_all.ps1 first."
         )
 
-    df = pd.DataFrame(rows)
-    df = df.sort_values(['mode', 'vus']).reset_index(drop=True)
-    return df
+    frame = pd.DataFrame(rows)
+    required = {'run_id', 'mode', 'vus', *METRICS}
+    missing = required.difference(frame.columns)
+    if missing:
+        raise ValueError(f"Result JSON is missing required fields: {', '.join(sorted(missing))}")
+    return frame.sort_values(['mode', 'vus', 'run_id']).reset_index(drop=True)
 
-# ── Funções de gráfico ────────────────────────────────────────────────────────
 
-def configure_axes(ax, title: str, xlabel: str, ylabel: str, df: pd.DataFrame):
-    """Aplica estilos comuns a todos os gráficos."""
+def summarize_runs(frame: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate repeated runs as medians and interquartile ranges."""
+    rows = []
+    for (mode, vus), group in frame.groupby(['mode', 'vus'], sort=True):
+        row = {'mode': mode, 'vus': int(vus), 'runs': int(len(group))}
+        for metric in METRICS:
+            values = pd.to_numeric(group[metric], errors='coerce').dropna()
+            if values.empty:
+                row[f'{metric}_median'] = float('nan')
+                row[f'{metric}_q1'] = float('nan')
+                row[f'{metric}_q3'] = float('nan')
+                continue
+            row[f'{metric}_median'] = float(values.median())
+            row[f'{metric}_q1'] = float(values.quantile(0.25))
+            row[f'{metric}_q3'] = float(values.quantile(0.75))
+        rows.append(row)
+    return pd.DataFrame(rows).sort_values(['mode', 'vus']).reset_index(drop=True)
+
+
+def configure_axes(ax, title: str, ylabel: str, frame: pd.DataFrame) -> None:
     ax.set_title(title, fontsize=14, fontweight='bold', pad=12)
-    ax.set_xlabel(xlabel, fontsize=11)
+    ax.set_xlabel('Concorrência (VUs)', fontsize=11)
     ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_xticks(df['vus'].unique())
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x)}'))
-    ax.legend(fontsize=10)
+    ax.set_xticks(sorted(frame['vus'].unique()))
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda value, _: f'{int(value)}'))
+    ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3, linestyle='--')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
 
-def plot_metric(df: pd.DataFrame, metric: str, title: str, ylabel: str, filename: str):
-    """Gera um gráfico de linha para uma métrica, agrupado por modo."""
+def plot_metric(frame: pd.DataFrame, metric: str, title: str, ylabel: str, filename: str) -> None:
+    """Plot the median of each condition with an IQR error bar across runs."""
     fig, ax = plt.subplots(figsize=(9, 5))
 
     for mode, style in MODE_STYLE.items():
-        subset = df[df['mode'] == mode].sort_values('vus')
+        subset = frame[frame['mode'] == mode].sort_values('vus')
+        subset = subset[subset[f'{metric}_median'].notna()]
         if subset.empty:
             continue
-        ax.plot(
-            subset['vus'], subset[metric],
+
+        medians = subset[f'{metric}_median']
+        lower = (medians - subset[f'{metric}_q1']).clip(lower=0).to_numpy()
+        upper = (subset[f'{metric}_q3'] - medians).clip(lower=0).to_numpy()
+        ax.errorbar(
+            subset['vus'], medians,
+            yerr=[lower, upper],
             color=style['color'],
             marker=style['marker'],
             label=style['label'],
             linewidth=2,
             markersize=7,
+            capsize=4,
         )
-        # Anotação de valor em cada ponto
-        for _, row in subset.iterrows():
-            ax.annotate(
-                f"{row[metric]:.1f}",
-                xy=(row['vus'], row[metric]),
-                xytext=(4, 6),
-                textcoords='offset points',
-                fontsize=8,
-                color=style['color'],
-            )
 
-    configure_axes(ax, title, 'Concorrência (VUs)', ylabel, df)
+    configure_axes(ax, title, ylabel, frame)
     fig.tight_layout()
-
-    out_path = os.path.join(FIGURES_DIR, filename)
-    fig.savefig(out_path, dpi=150)
-    print(f"[OK] Gráfico guardado: {out_path}")
+    output_path = os.path.join(FIGURES_DIR, filename)
+    fig.savefig(output_path, dpi=150)
+    print(f'[OK] Figure saved: {output_path}')
     plt.close(fig)
 
 
-def plot_latency_comparison(df: pd.DataFrame):
-    """
-    Gráfico de barras agrupadas: p50 / p95 / p99 para cada modo
-    ao nível de concorrência mais alto (melhor para a apresentação).
-    """
-    max_vus = df['vus'].max()
-    subset  = df[df['vus'] == max_vus].set_index('mode')
+def plot_latency_comparison(summary: pd.DataFrame) -> None:
+    """Plot median p50/p95/p99 with IQR at the highest measured VU level."""
+    max_vus = int(summary['vus'].max())
+    subset = summary[summary['vus'] == max_vus].set_index('mode')
+    modes = [mode for mode in MODE_STYLE if mode in subset.index]
+    labels = [MODE_STYLE[mode]['label'] for mode in modes]
+    positions = list(range(len(modes)))
+    width = 0.25
+    metric_specs = [
+        ('p50_ms', 'p50', '#95A5A6', -width),
+        ('p95_ms', 'p95', '#F39C12', 0),
+        ('p99_ms', 'p99', '#E74C3C', width),
+    ]
 
-    modes      = list(MODE_STYLE.keys())
-    labels     = [MODE_STYLE[m]['label'] for m in modes]
-    p50_vals   = [subset.loc[m, 'p50_ms'] if m in subset.index else 0 for m in modes]
-    p95_vals   = [subset.loc[m, 'p95_ms'] if m in subset.index else 0 for m in modes]
-    p99_vals   = [subset.loc[m, 'p99_ms'] if m in subset.index else 0 for m in modes]
-
-    x      = range(len(modes))
-    width  = 0.25
     fig, ax = plt.subplots(figsize=(9, 5))
+    for metric, label, color, offset in metric_specs:
+        medians = [subset.loc[mode, f'{metric}_median'] for mode in modes]
+        lower = [
+            max(0, subset.loc[mode, f'{metric}_median'] - subset.loc[mode, f'{metric}_q1'])
+            for mode in modes
+        ]
+        upper = [
+            max(0, subset.loc[mode, f'{metric}_q3'] - subset.loc[mode, f'{metric}_median'])
+            for mode in modes
+        ]
+        ax.bar(
+            [position + offset for position in positions], medians, width,
+            label=label, color=color, yerr=[lower, upper], capsize=3,
+        )
 
-    bars_p50 = ax.bar([i - width for i in x], p50_vals, width, label='p50', color='#95A5A6')
-    bars_p95 = ax.bar([i         for i in x], p95_vals, width, label='p95', color='#F39C12')
-    bars_p99 = ax.bar([i + width for i in x], p99_vals, width, label='p99', color='#E74C3C')
-
-    ax.set_title(f'Distribuição de Latência a {max_vus} VUs', fontsize=14, fontweight='bold', pad=12)
-    ax.set_xlabel('Modelo de Concorrência', fontsize=11)
+    ax.set_title(f'Latência a {max_vus} VUs (mediana e IQR)', fontsize=14, fontweight='bold', pad=12)
+    ax.set_xlabel('Modelo de concorrência', fontsize=11)
     ax.set_ylabel('Latência (ms)', fontsize=11)
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(labels, fontsize=10)
-    ax.legend(fontsize=10)
+    ax.set_xticks(positions)
+    ax.set_xticklabels(labels, fontsize=9)
+    ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3, linestyle='--', axis='y')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     fig.tight_layout()
 
-    out_path = os.path.join(FIGURES_DIR, f'latency_bars_vus{max_vus}.png')
-    fig.savefig(out_path, dpi=150)
-    print(f"[OK] Gráfico guardado: {out_path}")
+    output_path = os.path.join(FIGURES_DIR, f'latency_bars_vus{max_vus}.png')
+    fig.savefig(output_path, dpi=150)
+    print(f'[OK] Figure saved: {output_path}')
     plt.close(fig)
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 
-def main():
-    print("=" * 55)
-    print("  PPC — Gerador de Gráficos")
-    print("=" * 55)
+def main() -> None:
+    raw = load_results(RAW_DIR)
+    summary = summarize_runs(raw)
 
-    df = load_results(RAW_DIR)
-    print(f"\n[INFO] {len(df)} resultados carregados:\n")
-    print(df[['mode', 'vus', 'throughput', 'p50_ms', 'p95_ms', 'p99_ms', 'error_rate']].to_string(index=False))
-    print()
+    print(f'Loaded {len(raw)} measured runs:')
+    print(raw.groupby(['mode', 'vus']).size().rename('runs').to_string())
 
-    # Gráfico 1: Throughput vs Concorrência
-    plot_metric(
-        df, metric='throughput',
-        title='Throughput vs Concorrência',
-        ylabel='Throughput (req/s)',
-        filename='throughput_vs_concurrency.png',
-    )
-
-    # Gráfico 2: Latência p95 vs Concorrência
-    plot_metric(
-        df, metric='p95_ms',
-        title='Latência p95 vs Concorrência',
-        ylabel='Latência p95 (ms)',
-        filename='latency_p95_vs_concurrency.png',
-    )
-
-    # Gráfico 3: Latência p99 vs Concorrência
-    plot_metric(
-        df, metric='p99_ms',
-        title='Latência p99 vs Concorrência',
-        ylabel='Latência p99 (ms)',
-        filename='latency_p99_vs_concurrency.png',
-    )
-
-    # Gráfico 4: Barras comparativas ao nível de concorrência mais alto
-    plot_latency_comparison(df)
-
-    # Exportar tabela completa para CSV
     csv_path = os.path.join(RAW_DIR, 'resultados_summary.csv')
-    df.to_csv(csv_path, index=False)
-    print(f"\n[OK] Tabela completa guardada: {csv_path}")
+    summary.to_csv(csv_path, index=False)
+    print(f'[OK] Grouped summary saved: {csv_path}')
 
-    print("\n" + "=" * 55)
-    print(f"  Gráficos gerados em: results/figures/")
-    print("=" * 55)
+    plot_metric(
+        summary, 'throughput', 'Throughput vs Concorrência',
+        'Throughput (req/s)', 'throughput_vs_concurrency.png',
+    )
+    plot_metric(
+        summary, 'p95_ms', 'Latência p95 vs Concorrência',
+        'Latência p95 (ms)', 'latency_p95_vs_concurrency.png',
+    )
+    plot_metric(
+        summary, 'p99_ms', 'Latência p99 vs Concorrência',
+        'Latência p99 (ms)', 'latency_p99_vs_concurrency.png',
+    )
+    plot_latency_comparison(summary)
 
 
 if __name__ == '__main__':
