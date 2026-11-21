@@ -1,0 +1,24 @@
+# Ambiente virtual Python (criado para gerar os gráficos)
+.venv/
+__pycache__/
+*.pyc
+
+# Builds Maven
+target/
+
+# IDE e sistema
+.idea/
+.DS_Store
+
+# Ficheiros auxiliares do LaTeX
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.blg
+*.out
+*.synctex.gz
+preliminary/build/
+
+# Resultados de testes de diagnóstico (não fazem parte da série)
+benchmarks/results/debug/

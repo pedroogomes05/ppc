@@ -1,4 +1,4 @@
-$MODES = @('platform', 'virtual', 'async')
+﻿$MODES = @('platform', 'virtual', 'async')
 $VUS_LEVELS = @(10, 500, 1000)
 $REPETITIONS = 3
 $WARMUP_SECONDS = 10
@@ -8,7 +8,7 @@ $STUB_DELAY_MS = 1000
 $TOMCAT_MAX_THREADS = 200
 
 # Change this if the Mac's LAN address changes. Do not add a trailing slash.
-$BASE_URL = 'http://192.168.1.24:8081'
+$BASE_URL = 'http://192.168.1.191:8081'
 $BASE_URL = $BASE_URL.TrimEnd('/')
 
 $RESULTS_RELATIVE = 'results/raw_rq1'
@@ -106,17 +106,14 @@ foreach ($case in $orderedCases) {
         '--env', "STUB_DELAY_MS=$STUB_DELAY_MS",
         '--env', "TOMCAT_MAX_THREADS=$TOMCAT_MAX_THREADS",
         '--env', "RESULTS_DIR=$RESULTS_RELATIVE",
+        '--env', "WARMUP_SECONDS=$WARMUP_SECONDS",
+        '--env', "MEASUREMENT_SECONDS=$MEASUREMENT_SECONDS",
         '--quiet'
     )
 
-    $warmupArgs = @('run') + $sharedArgs + @('--env', 'WARMUP=true', 'benchmark.js')
-    & $K6 @warmupArgs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "O aquecimento terminou com código $LASTEXITCODE; vou continuar para guardar a medição."
-    }
-
-    $measurementArgs = @('run') + $sharedArgs + @('--env', 'WARMUP=false', 'benchmark.js')
-    & $K6 @measurementArgs
+    # Warm-up (gradual ramp) and measurement run in the same k6 process.
+    $runArgs = @('run') + $sharedArgs + @('benchmark.js')
+    & $K6 @runArgs
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "O k6 terminou com código $LASTEXITCODE. Verifica o JSON desta execução e continua a série."
     }
