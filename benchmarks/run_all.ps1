@@ -1,6 +1,6 @@
 ﻿$MODES = @('platform', 'virtual', 'async')
-$VUS_LEVELS = @(10, 500, 1000)
-$REPETITIONS = 3
+$VUS_LEVELS = @(10, 100, 500, 1000, 2000)
+$REPETITIONS = 5
 $WARMUP_SECONDS = 10
 $MEASUREMENT_SECONDS = 30
 $PAUSE_BETWEEN_RUNS_SECONDS = 3
@@ -11,7 +11,7 @@ $TOMCAT_MAX_THREADS = 200
 $BASE_URL = 'http://192.168.1.191:8081'
 $BASE_URL = $BASE_URL.TrimEnd('/')
 
-$RESULTS_RELATIVE = 'results/raw_rq1'
+$RESULTS_RELATIVE = 'results/rq1_final'
 $SCRIPT_DIR = $PSScriptRoot
 $RESULTS_PATH = Join-Path $SCRIPT_DIR ($RESULTS_RELATIVE -replace '/', '\')
 
@@ -76,6 +76,7 @@ for ($index = 0; $index -lt $orderedCases.Count; $index++) {
 
 $orderFile = Join-Path $RESULTS_PATH "run_order_$sessionId.csv"
 $orderLog | Export-Csv -Path $orderFile -NoTypeInformation -Encoding UTF8
+$timingsFile = Join-Path $RESULTS_PATH "run_timings_$sessionId.csv"
 
 $total = $orderedCases.Count
 $totalSeconds = ($total * ($WARMUP_SECONDS + $MEASUREMENT_SECONDS)) + ([Math]::Max(0, $total - 1) * $PAUSE_BETWEEN_RUNS_SECONDS)
@@ -113,9 +114,16 @@ foreach ($case in $orderedCases) {
 
     # Warm-up (gradual ramp) and measurement run in the same k6 process.
     $runArgs = @('run') + $sharedArgs + @('benchmark.js')
+    $startedAt = (Get-Date).ToUniversalTime().ToString('o')
     & $K6 @runArgs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "O k6 terminou com código $LASTEXITCODE. Verifica o JSON desta execução e continua a série."
+    $exitCode = $LASTEXITCODE
+    $endedAt = (Get-Date).ToUniversalTime().ToString('o')
+    [pscustomobject]@{
+        position = $case.position; run_id = $case.run_id; repetition = $case.repetition
+        mode = $case.mode; vus = $case.vus; started_at_utc = $startedAt; ended_at_utc = $endedAt; k6_exit_code = $exitCode
+    } | Export-Csv -Path $timingsFile -NoTypeInformation -Encoding UTF8 -Append
+    if ($exitCode -ne 0) {
+        Write-Warning "O k6 terminou com código $exitCode. Verifica o JSON desta execução e continua a série."
     }
 
     $completed++
