@@ -1,0 +1,29 @@
+{
+  "run_id": "20261121_122244_500_run023",
+  "repetition": 3,
+  "mode": "async",
+  "vus": 1000,
+  "base_url": "http://192.168.1.191:8081",
+  "stub_delay_ms": 1000,
+  "tomcat_max_threads": 200,
+  "warmup_duration_s": 10,
+  "measurement_duration_s": 30,
+  "completed_at_utc": "2026-11-21T12:40:24.526Z",
+  "throughput": 908.97,
+  "throughput_ok": 908.97,
+  "p50_ms": 1087.71,
+  "p95_ms": 1244.7,
+  "p99_ms": 1329.45,
+  "avg_ms": 1106.18,
+  "max_ms": 1514.71,
+  "error_rate": 0,
+  "total_requests": 27269,
+  "ok_requests": 27269,
+  "errors": {
+    "timeout": 0,
+    "network": 0,
+    "http_5xx": 0,
+    "other": 0,
+    "warmup_errors": 0
+  }
+}
